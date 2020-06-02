@@ -3,7 +3,6 @@ module github.com/filecoin-project/sector-storage
 go 1.13
 
 require (
-	github.com/detailyang/go-fallocate v0.0.0-20180908115635-432fa640bd2e
 	github.com/elastic/go-sysinfo v1.3.0
 	github.com/filecoin-project/filecoin-ffi v0.0.0-20200326153646-e899cc1dd072
 	github.com/filecoin-project/go-bitfield v0.0.2-0.20200518150651-562fdb554b6e

@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/detailyang/go-fallocate"
 	"golang.org/x/xerrors"
 
 	rlepluslazy "github.com/filecoin-project/go-bitfield/rle"
@@ -62,7 +61,7 @@ func createPartialFile(maxPieceSize abi.PaddedPieceSize, path string) (*partialF
 	}
 
 	err = func() error {
-		err := fallocate.Fallocate(f, 0, int64(maxPieceSize))
+		err := fallocate(f, 0, int64(maxPieceSize))
 		if err != nil {
 			return xerrors.Errorf("fallocate '%s': %w", path, err)
 		}
@@ -259,4 +258,28 @@ func pieceRun(offset storiface.PaddedByteIndex, size abi.PaddedPieceSize) rleplu
 	})
 
 	return &rlepluslazy.RunSliceIterator{Runs: runs}
+}
+
+func fallocate(f *os.File, offset, length int64) error {
+	const s int64 = 65536
+	var buf [s]byte
+
+	if _, err := f.Seek(offset, os.SEEK_SET); err != nil {
+		return err
+	}
+
+	for length > 0 {
+		n := s
+		if length < n {
+			n = length
+		}
+
+		if _, err := f.Write(buf[:n]); err != nil {
+			return err
+		}
+
+		length -= n
+	}
+
+	return nil
 }
