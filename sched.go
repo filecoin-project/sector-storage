@@ -240,7 +240,9 @@ func (sh *scheduler) maybeSchedRequest(req *workerRequest) (bool, error) {
 			var serr error
 
 			sort.SliceStable(acceptable, func(i, j int) bool {
-				r, err := req.sel.Cmp(req.ctx, req.taskType, sh.workers[acceptable[i]], sh.workers[acceptable[j]])
+				rpcCtx, cancel := context.WithTimeout(req.ctx, 5*time.Second)
+				r, err := req.sel.Cmp(rpcCtx, req.taskType, sh.workers[acceptable[i]], sh.workers[acceptable[j]])
+				cancel()
 				if err != nil {
 					serr = multierror.Append(serr, err)
 				}
