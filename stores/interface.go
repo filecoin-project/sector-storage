@@ -2,11 +2,9 @@ package stores
 
 import (
 	"context"
-	"syscall"
-
-	"golang.org/x/xerrors"
 
 	"github.com/filecoin-project/specs-actors/actors/abi"
+	"github.com/ricochet2200/go-disk-usage/du"
 )
 
 type PathType bool
@@ -38,14 +36,11 @@ type Store interface {
 }
 
 func Stat(path string) (FsStat, error) {
-	var stat syscall.Statfs_t
-	if err := syscall.Statfs(path, &stat); err != nil {
-		return FsStat{}, xerrors.Errorf("statfs: %w", err)
-	}
+	di := du.NewDiskUsage(path)
 
 	return FsStat{
-		Capacity:  stat.Blocks * uint64(stat.Bsize),
-		Available: stat.Bavail * uint64(stat.Bsize),
+		Capacity:  di.Size(),
+		Available: di.Available(),
 	}, nil
 }
 
