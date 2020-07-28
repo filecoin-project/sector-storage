@@ -290,7 +290,10 @@ func (sh *scheduler) trySched() {
 
 		task.indexHeap = sqi
 		for wnd, windowRequest := range sh.openWindows {
-			worker := sh.workers[windowRequest.worker]
+			worker, ok := sh.workers[windowRequest.worker]
+			if !ok || worker == nil {
+				continue
+			}
 
 			// TODO: allow bigger windows
 			if !windows[wnd].allocated.canHandleRequest(needRes, windowRequest.worker, worker.info.Resources) {
