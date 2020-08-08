@@ -364,7 +364,7 @@ func (st *Local) AcquireSector(ctx context.Context, sid abi.SectorID, spt abi.Re
 			continue
 		}
 
-		sis, err := st.index.StorageBestAlloc(ctx, fileType, spt, pathType)
+		sis, err := st.index.StorageBestAlloc(ctx, fileType, pathType)
 		if err != nil {
 			return SectorPaths{}, SectorPaths{}, xerrors.Errorf("finding best storage for allocating : %w", err)
 		}

@@ -171,7 +171,7 @@ func TestSchedStartStop(t *testing.T) {
 	sched := newScheduler(spt)
 	go sched.runSched()
 
-	addTestWorker(t, sched, stores.NewIndex(), "fred", nil)
+	addTestWorker(t, sched, stores.NewIndex(spt), "fred", nil)
 
 	require.NoError(t, sched.Close(context.TODO()))
 }
@@ -283,7 +283,7 @@ func TestSched(t *testing.T) {
 
 	testFunc := func(workers []workerSpec, tasks []task) func(t *testing.T) {
 		return func(t *testing.T) {
-			index := stores.NewIndex()
+			index := stores.NewIndex(spt)
 
 			sched := newScheduler(spt)
 			sched.testSync = make(chan struct{})

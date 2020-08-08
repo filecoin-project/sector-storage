@@ -84,10 +84,10 @@ func newTestMgr(ctx context.Context, t *testing.T) (*Manager, *stores.Local, *st
 	st := newTestStorage(t)
 	defer st.cleanup()
 
-	si := stores.NewIndex()
 	cfg := &ffiwrapper.Config{
 		SealProofType: abi.RegisteredSealProof_StackedDrg2KiBV1,
 	}
+	si := stores.NewIndex(cfg.SealProofType)
 
 	lstor, err := stores.NewLocal(ctx, st, si, nil)
 	require.NoError(t, err)

@@ -5,8 +5,6 @@ import (
 
 	"golang.org/x/xerrors"
 
-	"github.com/filecoin-project/specs-actors/actors/abi"
-
 	"github.com/filecoin-project/sector-storage/sealtasks"
 	"github.com/filecoin-project/sector-storage/stores"
 )
@@ -25,7 +23,7 @@ func newAllocSelector(index stores.SectorIndex, alloc stores.SectorFileType, pty
 	}
 }
 
-func (s *allocSelector) Ok(ctx context.Context, task sealtasks.TaskType, spt abi.RegisteredSealProof, whnd *workerHandle) (bool, error) {
+func (s *allocSelector) Ok(ctx context.Context, task sealtasks.TaskType, whnd *workerHandle) (bool, error) {
 	tasks, err := whnd.w.TaskTypes(ctx)
 	if err != nil {
 		return false, xerrors.Errorf("getting supported worker task types: %w", err)
@@ -44,7 +42,7 @@ func (s *allocSelector) Ok(ctx context.Context, task sealtasks.TaskType, spt abi
 		have[path.ID] = struct{}{}
 	}
 
-	best, err := s.index.StorageBestAlloc(ctx, s.alloc, spt, s.ptype)
+	best, err := s.index.StorageBestAlloc(ctx, s.alloc, s.ptype)
 	if err != nil {
 		return false, xerrors.Errorf("finding best alloc storage: %w", err)
 	}

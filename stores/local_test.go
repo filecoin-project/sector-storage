@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/filecoin-project/sector-storage/fsutil"
+	"github.com/filecoin-project/specs-actors/actors/abi"
 	"github.com/google/uuid"
 	"io/ioutil"
 	"os"
@@ -78,8 +79,8 @@ func TestLocalStorage(t *testing.T) {
 	tstor := &TestingLocalStorage{
 		root: root,
 	}
-
-	index := NewIndex()
+	spt := abi.RegisteredSealProof_StackedDrg32GiBV1
+	index := NewIndex(spt)
 
 	st, err := NewLocal(ctx, tstor, index, nil)
 	require.NoError(t, err)

@@ -56,7 +56,7 @@ type SectorIndex interface { // part of storage-miner api
 	StorageDropSector(ctx context.Context, storageId ID, s abi.SectorID, ft SectorFileType) error
 	StorageFindSector(ctx context.Context, sector abi.SectorID, ft SectorFileType, allowFetch bool) ([]SectorStorageInfo, error)
 
-	StorageBestAlloc(ctx context.Context, allocate SectorFileType, spt abi.RegisteredSealProof, pathType PathType) ([]StorageInfo, error)
+	StorageBestAlloc(ctx context.Context, allocate SectorFileType, pathType PathType) ([]StorageInfo, error)
 
 	// atomically acquire locks on all sector file types. close ctx to unlock
 	StorageLock(ctx context.Context, sector abi.SectorID, read SectorFileType, write SectorFileType) error
@@ -82,6 +82,8 @@ type storageEntry struct {
 }
 
 type Index struct {
+	spt abi.RegisteredSealProof
+
 	*indexLocks
 	lk sync.RWMutex
 
@@ -89,8 +91,9 @@ type Index struct {
 	stores  map[ID]*storageEntry
 }
 
-func NewIndex() *Index {
+func NewIndex(spt abi.RegisteredSealProof) *Index {
 	return &Index{
+		spt:spt,
 		indexLocks: &indexLocks{
 			locks: map[abi.SectorID]*sectorLock{},
 		},
@@ -296,7 +299,30 @@ func (i *Index) StorageFindSector(ctx context.Context, s abi.SectorID, ft Sector
 	}
 
 	if allowFetch {
+		spaceReq, err := ft.SealSpaceUse(i.spt)
+		if err != nil {
+			return nil, xerrors.Errorf("estimating required space: %w", err)
+		}
 		for id, st := range i.stores {
+			if !st.info.CanSeal {
+				continue
+			}
+
+			if spaceReq > uint64(st.fsi.Available) {
+				log.Debugf("not selecting on %s, out of space (available: %d, need: %d)", st.info.ID, st.fsi.Available, spaceReq)
+				continue
+			}
+
+			if time.Since(st.lastHeartbeat) > SkippedHeartbeatThresh {
+				log.Debugf("not selecting on %s, didn't receive heartbeats for %s", st.info.ID, time.Since(st.lastHeartbeat))
+				continue
+			}
+
+			if st.heartbeatErr != nil {
+				log.Debugf("not selecting on %s, heartbeat error: %s", st.info.ID, st.heartbeatErr)
+				continue
+			}
+
 			if _, ok := storageIDs[id]; ok {
 				continue
 			}
@@ -340,13 +366,13 @@ func (i *Index) StorageInfo(ctx context.Context, id ID) (StorageInfo, error) {
 	return *si.info, nil
 }
 
-func (i *Index) StorageBestAlloc(ctx context.Context, allocate SectorFileType, spt abi.RegisteredSealProof, pathType PathType) ([]StorageInfo, error) {
+func (i *Index) StorageBestAlloc(ctx context.Context, allocate SectorFileType, pathType PathType) ([]StorageInfo, error) {
 	i.lk.RLock()
 	defer i.lk.RUnlock()
 
 	var candidates []storageEntry
 
-	spaceReq, err := allocate.SealSpaceUse(spt)
+	spaceReq, err := allocate.SealSpaceUse(i.spt)
 	if err != nil {
 		return nil, xerrors.Errorf("estimating required space: %w", err)
 	}
