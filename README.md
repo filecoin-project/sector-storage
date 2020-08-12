@@ -1,9 +1,3 @@
-# NOTE: Moved to filecoin-project/lotus
-
-The code currently lives, and is developed in https://github.com/filecoin-project/lotus/tree/next/extern/sector-storage
-
-DO NOT OPEN PRs IN THIS REPOSITORY
-
 # sector-storage
 
 [![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](http://ipn.io)
